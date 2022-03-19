@@ -1,0 +1,20 @@
+[package]
+name = "skin_generator"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+jni = "0.19.0"
+reqwest = { version = "0.11.10", features = ["blocking", "json"] }
+serde_json = "1.0"
+base64 = "0.13.0"
+image = "0.24.1"
+futures = "0.3.21"
+tokio = { version = "1.17.0", features = ["full"] }
+crossbeam = "0.8.1"
+
+[lib]
+name = "skin_generator"
+crate-type = ["cdylib"]
