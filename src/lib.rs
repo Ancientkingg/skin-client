@@ -17,7 +17,7 @@ fn get_skin_url(user_uuid: &str) -> Result<(String, bool), Error> {
     let skin_info: &str = std::str::from_utf8(&decoded).unwrap();
     let skin_url: Value = serde_json::from_str(skin_info).unwrap();
     let tex_url: &str = skin_url["textures"]["SKIN"]["url"].as_str().unwrap();
-    let slim: bool = true;//TODO set true as temp because my skin is slim
+    let slim: bool = true; //TODO set true as temp because my skin is slim
     Ok((tex_url.to_string(), slim))
 }
 
@@ -67,15 +67,63 @@ fn process_skin(idx: usize, mut img: DynamicImage, slim: bool) {
             let mut mod_img = img;
             if !slim {
                 mod_img = move_image(Rect::new(36, 48, 8, 4), Rect::new(8, 0, 16, 8), mod_img);
+                mod_img = move_image(Rect::new(32, 52, 16, 12), Rect::new(0, 8, 32, 8), mod_img);
+
+                // 2nd layer
+                mod_img = move_image(Rect::new(36 + 16, 48, 8, 4), Rect::new(8 + 32, 0, 16, 8), mod_img);
+                mod_img = move_image(Rect::new(32 + 16, 52, 16, 12), Rect::new(0 + 32, 8, 32, 8), mod_img);
+
             } else {
                 mod_img = move_image(Rect::new(36, 48, 3, 4), Rect::new(8, 0, 8, 8), mod_img);
                 mod_img = move_image(Rect::new(39, 48, 3, 4), Rect::new(16, 0, 8, 8), mod_img);
                 mod_img = move_image(Rect::new(36, 52, 3, 12), Rect::new(8, 8, 8, 8), mod_img);
                 mod_img = move_image(Rect::new(39, 52, 4, 12), Rect::new(16, 8, 8, 8), mod_img);
                 mod_img = move_image(Rect::new(32, 52, 4, 12), Rect::new(0, 8, 8, 8), mod_img);
-                mod_img = move_image(Rect::new(43, 52, 4, 12), Rect::new(24, 8, 8, 8), mod_img);
+                mod_img = move_image(Rect::new(43, 52, 3, 12), Rect::new(24, 8, 8, 8), mod_img);
+
+                // 2nd layer
+                mod_img = move_image(Rect::new(36 + 16, 48, 3, 4), Rect::new(8 + 32, 0, 8, 8), mod_img);
+                mod_img = move_image(Rect::new(39 + 16, 48, 3, 4), Rect::new(16 + 32, 0, 8, 8), mod_img);
+                mod_img = move_image(Rect::new(36 + 16, 52, 3, 12), Rect::new(8 + 32, 8, 8, 8), mod_img);
+                mod_img = move_image(Rect::new(39 + 16, 52, 4, 12), Rect::new(16 + 32, 8, 8, 8), mod_img);
+                mod_img = move_image(Rect::new(32 + 16, 52, 4, 12), Rect::new(0 + 32, 8, 8, 8), mod_img);
+                mod_img = move_image(Rect::new(43 + 16, 52, 3, 12), Rect::new(24 + 32, 8, 8, 8), mod_img);
+
             }
             mod_img
+        }
+        2 => {
+            // Right arm
+            let mut mod_img = img;
+            if !slim {
+                mod_img = move_image(Rect::new(36, 48, 8, 4), Rect::new(8, 0, 16, 8), mod_img);
+                mod_img = move_image(Rect::new(32, 52, 16, 12), Rect::new(0, 8, 32, 8), mod_img);
+
+                // 2nd layer
+                mod_img = move_image(Rect::new(36 + 16, 48, 8, 4), Rect::new(8 + 32, 0, 16, 8), mod_img);
+                mod_img = move_image(Rect::new(32 + 16, 52, 16, 12), Rect::new(0 + 32, 8, 32, 8), mod_img);
+
+            } else {
+                mod_img = move_image(Rect::new(44, 16, 3, 4), Rect::new(8, 0, 8, 8), mod_img);
+                mod_img = move_image(Rect::new(47, 16, 3, 4), Rect::new(16, 0, 8, 8), mod_img);
+                mod_img = move_image(Rect::new(44, 20, 3, 12), Rect::new(8, 8, 8, 8), mod_img);
+                mod_img = move_image(Rect::new(47, 20, 4, 12), Rect::new(16, 8, 8, 8), mod_img);
+                mod_img = move_image(Rect::new(40, 20, 4, 12), Rect::new(0, 8, 8, 8), mod_img);
+                mod_img = move_image(Rect::new(51, 20, 3, 12), Rect::new(24, 8, 8, 8), mod_img);
+
+                // 2nd layer
+                mod_img = move_image(Rect::new(44, 16 + 16, 3, 4), Rect::new(8 + 32, 0, 8, 8), mod_img);
+                mod_img = move_image(Rect::new(47, 16 + 16, 3, 4), Rect::new(16 + 32, 0, 8, 8), mod_img);
+                mod_img = move_image(Rect::new(44, 20 + 16, 3, 12), Rect::new(8 + 32, 8, 8, 8), mod_img);
+                mod_img = move_image(Rect::new(47, 20 + 16, 4, 12), Rect::new(16 + 32, 8, 8, 8), mod_img);
+                mod_img = move_image(Rect::new(40, 20 + 16, 4, 12), Rect::new(0 + 32, 8, 8, 8), mod_img);
+                mod_img = move_image(Rect::new(51, 20 + 16, 3, 12), Rect::new(24 + 32, 8, 8, 8), mod_img);
+
+            }
+            mod_img
+        }
+        3 => {
+            // Left leg
         }
         _ => DynamicImage::new_rgb8(1, 1),
     };
