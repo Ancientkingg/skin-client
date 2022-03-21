@@ -180,6 +180,7 @@ pub fn generate_skin(uuid: &str, slim: bool) {
                 let client = reqwest::blocking::Client::builder()
                     .user_agent("joebama/1.0")
                     .build().unwrap();
+                    //TODO: need to add header with "Authorization: Bearer <your key>"
                 let form = reqwest::blocking::multipart::Form::new()
                     .text("variant", variant)
                     .text("name", Alphanumeric.sample_string(&mut rand::thread_rng(), 16))
@@ -188,13 +189,29 @@ pub fn generate_skin(uuid: &str, slim: bool) {
                     // .unwrap();
                 let image = reqwest::blocking::multipart::Part::bytes(buf).mime_str("image/png").unwrap().file_name("joebama_skin.png");
                 let form = form.part("file", image);
-                // println!("{:?}",form);
-                thread::sleep(Duration::from_millis(1500*idx as u64));
                 let resp = client.post("https://api.mineskin.org/generate/upload")
                     .multipart(form)
                     .send().unwrap();
                 let response: Value = resp.json().unwrap();
-                println!("{}", response);
+                if let Some(x) = response.get("data") {
+                    // TODO go out of loop and return textureValue
+                    /*
+                    {
+                      "timestamp" : 1647895563787,
+                      "profileId" : "f58debd59f5042228f6022211d4c140c",
+                      "profileName" : "unventivetalent",
+                      "signatureRequired" : true,
+                      "textures" : {
+                        "SKIN" : {
+                          "url" : "http://textures.minecraft.net/texture/6dbdb2bc870c1f89a1e69a812e50cdc179c92fdd2f141176f113d99d1a629da1"
+                        }
+                      }
+                    }
+                    */
+                } else {
+                    // TODO handle ratelimit by sleeping and looping
+                }
+                println!("{}\n\n", response);
             });
         }
     }).unwrap();
