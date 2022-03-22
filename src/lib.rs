@@ -1,17 +1,16 @@
-use std::{io::Cursor, time::Duration, thread};
-
+use std::{io::Cursor, thread, time::Duration};
+use crossbeam;
 use image::{DynamicImage, GenericImage};
+use rand::distributions::{Alphanumeric, DistString};
 use reqwest;
 use reqwest::Error;
 use serde_json::Value;
-use crossbeam;
-use rand::distributions::{Alphanumeric, DistString};
+use jni::JNIEnv;
+use jni::objects::{JClass, JString};
+use jni::sys::{jobject, jboolean, JNI_TRUE};
 
+const RETRY_TIMEOUT_MS: u64 = 150;
 
-//? If bearer access token is greenlit switch over to 
-//? GET https://api.minecraftservices.com/minecraft/profile
-
-#[allow(dead_code)]
 fn get_skin_url(user_uuid: &str) -> Result<String, Error> {
     let url = format!("https://sessionserver.mojang.com/session/minecraft/profile/{user_uuid}");
     let response: Value = reqwest::blocking::get(url)?.json().unwrap();
@@ -43,9 +42,12 @@ impl Rect {
 }
 
 fn move_image(src: Rect, dst: Rect, mut img: DynamicImage) -> DynamicImage {
-    let mut part_img = img.sub_image(src.x, src.y, src.width, src.height).to_image();
+    let mut part_img = img
+        .sub_image(src.x, src.y, src.width, src.height)
+        .to_image();
     if src != dst {
-        part_img = image::imageops::resize(&part_img, dst.width, dst.height, image::imageops::Nearest);
+        part_img =
+            image::imageops::resize(&part_img, dst.width, dst.height, image::imageops::Nearest);
     }
     img.copy_from(&part_img, dst.x, dst.y).unwrap();
     img
@@ -59,7 +61,7 @@ fn move_image(src: Rect, dst: Rect, mut img: DynamicImage) -> DynamicImage {
 ?TORSO 5
 */
 
-#[allow(dead_code)]
+
 fn process_skin(idx: usize, mut img: DynamicImage, slim: bool) -> DynamicImage {
     img.put_pixel(0, 0, image::Rgba([idx as u8, 0, 0, 255]));
 
@@ -72,9 +74,16 @@ fn process_skin(idx: usize, mut img: DynamicImage, slim: bool) -> DynamicImage {
                 mod_img = move_image(Rect::new(32, 52, 16, 12), Rect::new(0, 8, 32, 8), mod_img);
 
                 // 2nd layer
-                mod_img = move_image(Rect::new(36 + 16, 48, 8, 4), Rect::new(8 + 32, 0, 16, 8), mod_img);
-                mod_img = move_image(Rect::new(32 + 16, 52, 16, 12), Rect::new(0 + 32, 8, 32, 8), mod_img);
-
+                mod_img = move_image(
+                    Rect::new(36 + 16, 48, 8, 4),
+                    Rect::new(8 + 32, 0, 16, 8),
+                    mod_img,
+                );
+                mod_img = move_image(
+                    Rect::new(32 + 16, 52, 16, 12),
+                    Rect::new(0 + 32, 8, 32, 8),
+                    mod_img,
+                );
             } else {
                 mod_img = move_image(Rect::new(36, 48, 3, 4), Rect::new(8, 0, 8, 8), mod_img);
                 mod_img = move_image(Rect::new(39, 48, 3, 4), Rect::new(16, 0, 8, 8), mod_img);
@@ -84,13 +93,36 @@ fn process_skin(idx: usize, mut img: DynamicImage, slim: bool) -> DynamicImage {
                 mod_img = move_image(Rect::new(43, 52, 3, 12), Rect::new(24, 8, 8, 8), mod_img);
 
                 // 2nd layer
-                mod_img = move_image(Rect::new(36 + 16, 48, 3, 4), Rect::new(8 + 32, 0, 8, 8), mod_img);
-                mod_img = move_image(Rect::new(39 + 16, 48, 3, 4), Rect::new(16 + 32, 0, 8, 8), mod_img);
-                mod_img = move_image(Rect::new(36 + 16, 52, 3, 12), Rect::new(8 + 32, 8, 8, 8), mod_img);
-                mod_img = move_image(Rect::new(39 + 16, 52, 4, 12), Rect::new(16 + 32, 8, 8, 8), mod_img);
-                mod_img = move_image(Rect::new(32 + 16, 52, 4, 12), Rect::new(0 + 32, 8, 8, 8), mod_img);
-                mod_img = move_image(Rect::new(43 + 16, 52, 3, 12), Rect::new(24 + 32, 8, 8, 8), mod_img);
-
+                mod_img = move_image(
+                    Rect::new(36 + 16, 48, 3, 4),
+                    Rect::new(8 + 32, 0, 8, 8),
+                    mod_img,
+                );
+                mod_img = move_image(
+                    Rect::new(39 + 16, 48, 3, 4),
+                    Rect::new(16 + 32, 0, 8, 8),
+                    mod_img,
+                );
+                mod_img = move_image(
+                    Rect::new(36 + 16, 52, 3, 12),
+                    Rect::new(8 + 32, 8, 8, 8),
+                    mod_img,
+                );
+                mod_img = move_image(
+                    Rect::new(39 + 16, 52, 4, 12),
+                    Rect::new(16 + 32, 8, 8, 8),
+                    mod_img,
+                );
+                mod_img = move_image(
+                    Rect::new(32 + 16, 52, 4, 12),
+                    Rect::new(0 + 32, 8, 8, 8),
+                    mod_img,
+                );
+                mod_img = move_image(
+                    Rect::new(43 + 16, 52, 3, 12),
+                    Rect::new(24 + 32, 8, 8, 8),
+                    mod_img,
+                );
             }
             mod_img
         }
@@ -102,9 +134,16 @@ fn process_skin(idx: usize, mut img: DynamicImage, slim: bool) -> DynamicImage {
                 mod_img = move_image(Rect::new(32, 52, 16, 12), Rect::new(0, 8, 32, 8), mod_img);
 
                 // 2nd layer
-                mod_img = move_image(Rect::new(36 + 16, 48, 8, 4), Rect::new(8 + 32, 0, 16, 8), mod_img);
-                mod_img = move_image(Rect::new(32 + 16, 52, 16, 12), Rect::new(0 + 32, 8, 32, 8), mod_img);
-
+                mod_img = move_image(
+                    Rect::new(36 + 16, 48, 8, 4),
+                    Rect::new(8 + 32, 0, 16, 8),
+                    mod_img,
+                );
+                mod_img = move_image(
+                    Rect::new(32 + 16, 52, 16, 12),
+                    Rect::new(0 + 32, 8, 32, 8),
+                    mod_img,
+                );
             } else {
                 mod_img = move_image(Rect::new(44, 16, 3, 4), Rect::new(8, 0, 8, 8), mod_img);
                 mod_img = move_image(Rect::new(47, 16, 3, 4), Rect::new(16, 0, 8, 8), mod_img);
@@ -114,13 +153,36 @@ fn process_skin(idx: usize, mut img: DynamicImage, slim: bool) -> DynamicImage {
                 mod_img = move_image(Rect::new(51, 20, 3, 12), Rect::new(24, 8, 8, 8), mod_img);
 
                 // 2nd layer
-                mod_img = move_image(Rect::new(44, 16 + 16, 3, 4), Rect::new(8 + 32, 0, 8, 8), mod_img);
-                mod_img = move_image(Rect::new(47, 16 + 16, 3, 4), Rect::new(16 + 32, 0, 8, 8), mod_img);
-                mod_img = move_image(Rect::new(44, 20 + 16, 3, 12), Rect::new(8 + 32, 8, 8, 8), mod_img);
-                mod_img = move_image(Rect::new(47, 20 + 16, 4, 12), Rect::new(16 + 32, 8, 8, 8), mod_img);
-                mod_img = move_image(Rect::new(40, 20 + 16, 4, 12), Rect::new(0 + 32, 8, 8, 8), mod_img);
-                mod_img = move_image(Rect::new(51, 20 + 16, 3, 12), Rect::new(24 + 32, 8, 8, 8), mod_img);
-
+                mod_img = move_image(
+                    Rect::new(44, 16 + 16, 3, 4),
+                    Rect::new(8 + 32, 0, 8, 8),
+                    mod_img,
+                );
+                mod_img = move_image(
+                    Rect::new(47, 16 + 16, 3, 4),
+                    Rect::new(16 + 32, 0, 8, 8),
+                    mod_img,
+                );
+                mod_img = move_image(
+                    Rect::new(44, 20 + 16, 3, 12),
+                    Rect::new(8 + 32, 8, 8, 8),
+                    mod_img,
+                );
+                mod_img = move_image(
+                    Rect::new(47, 20 + 16, 4, 12),
+                    Rect::new(16 + 32, 8, 8, 8),
+                    mod_img,
+                );
+                mod_img = move_image(
+                    Rect::new(40, 20 + 16, 4, 12),
+                    Rect::new(0 + 32, 8, 8, 8),
+                    mod_img,
+                );
+                mod_img = move_image(
+                    Rect::new(51, 20 + 16, 3, 12),
+                    Rect::new(24 + 32, 8, 8, 8),
+                    mod_img,
+                );
             }
             mod_img
         }
@@ -131,10 +193,18 @@ fn process_skin(idx: usize, mut img: DynamicImage, slim: bool) -> DynamicImage {
             mod_img = move_image(Rect::new(16, 52, 16, 12), Rect::new(0, 8, 32, 8), mod_img);
 
             // 2nd layer
-            mod_img = move_image(Rect::new(20 - 16, 48, 8, 4), Rect::new(8 + 32, 0, 16, 8), mod_img);
-            mod_img = move_image(Rect::new(16 - 16, 52, 16, 12), Rect::new(0 + 32, 8, 32, 8), mod_img);
+            mod_img = move_image(
+                Rect::new(20 - 16, 48, 8, 4),
+                Rect::new(8 + 32, 0, 16, 8),
+                mod_img,
+            );
+            mod_img = move_image(
+                Rect::new(16 - 16, 52, 16, 12),
+                Rect::new(0 + 32, 8, 32, 8),
+                mod_img,
+            );
 
-            mod_img 
+            mod_img
         }
         4 => {
             // Right leg
@@ -143,10 +213,18 @@ fn process_skin(idx: usize, mut img: DynamicImage, slim: bool) -> DynamicImage {
             mod_img = move_image(Rect::new(16, 20, 24, 12), Rect::new(0, 8, 32, 8), mod_img);
 
             // 2nd layer
-            mod_img = move_image(Rect::new(20, 16 + 16, 16, 4), Rect::new(8 + 32, 0, 16, 8), mod_img);
-            mod_img = move_image(Rect::new(16, 20 + 16, 24, 12), Rect::new(0 + 32, 8, 32, 8), mod_img);
+            mod_img = move_image(
+                Rect::new(20, 16 + 16, 16, 4),
+                Rect::new(8 + 32, 0, 16, 8),
+                mod_img,
+            );
+            mod_img = move_image(
+                Rect::new(16, 20 + 16, 24, 12),
+                Rect::new(0 + 32, 8, 32, 8),
+                mod_img,
+            );
 
-            mod_img 
+            mod_img
         }
         5 => {
             let mut mod_img = img;
@@ -159,65 +237,91 @@ fn process_skin(idx: usize, mut img: DynamicImage, slim: bool) -> DynamicImage {
     img
 }
 
-#[allow(dead_code)]
-pub fn generate_skin(uuid: &str, slim: bool) {
+
+fn generate_skin(uuid: &str, slim: bool) -> Vec<(String, String)> {
     let tex_url = get_skin_url(uuid).unwrap();
-    let image_bytes = reqwest::blocking::get(tex_url)
-        .unwrap()
-        .bytes()
-        .unwrap();
+    let image_bytes = reqwest::blocking::get(tex_url).unwrap().bytes().unwrap();
     let image = image::load_from_memory(&image_bytes).unwrap();
     //DEBUG: let image = image::io::Reader::open("test_skin.png").unwrap().decode().unwrap();
 
     let variant = if slim { "slim" } else { "classic" };
-    crossbeam::scope(|scope| {
+    let tex_data_arr = crossbeam::scope(|scope| -> Vec<(String, String)> {
+        let mut data_arr: Vec<(String, String)> = vec![];
         for idx in 1..=5 {
             let img = image.clone();
-            scope.spawn(move |_| {
+            let handle = scope.spawn(move |_| -> Option<(String, String)> {
                 let img = process_skin(idx, img, slim);
                 let mut buf: Vec<u8> = Vec::new();
-                img.write_to(&mut Cursor::new(&mut buf), image::ImageOutputFormat::Png).unwrap();
+                img.write_to(&mut Cursor::new(&mut buf), image::ImageOutputFormat::Png)
+                    .unwrap();
                 let client = reqwest::blocking::Client::builder()
                     .user_agent("joebama/1.0")
-                    .build().unwrap();
-                    //TODO: need to add header with "Authorization: Bearer <your key>"
-                let form = reqwest::blocking::multipart::Form::new()
-                    .text("variant", variant)
-                    .text("name", Alphanumeric.sample_string(&mut rand::thread_rng(), 16))
-                    .text("visibility", "1");
-                    // .file("file", "test_skin.png")
-                    // .unwrap();
-                let image = reqwest::blocking::multipart::Part::bytes(buf).mime_str("image/png").unwrap().file_name("joebama_skin.png");
-                let form = form.part("file", image);
-                let resp = client.post("https://api.mineskin.org/generate/upload")
-                    .multipart(form)
-                    .send().unwrap();
-                let response: Value = resp.json().unwrap();
-                if let Some(x) = response.get("data") {
-                    // TODO go out of loop and return textureValue
-                    /*
-                    {
-                      "timestamp" : 1647895563787,
-                      "profileId" : "f58debd59f5042228f6022211d4c140c",
-                      "profileName" : "unventivetalent",
-                      "signatureRequired" : true,
-                      "textures" : {
-                        "SKIN" : {
-                          "url" : "http://textures.minecraft.net/texture/6dbdb2bc870c1f89a1e69a812e50cdc179c92fdd2f141176f113d99d1a629da1"
-                        }
-                      }
+                    .build()
+                    .unwrap();
+                //TODO: need to add header with "Authorization: Bearer <your key>"
+                loop {
+                    let form = reqwest::blocking::multipart::Form::new()
+                        .text("variant", variant)
+                        .text(
+                            "name",
+                            Alphanumeric.sample_string(&mut rand::thread_rng(), 16),
+                        )
+                        .text("visibility", "1");
+                    let image = reqwest::blocking::multipart::Part::bytes(buf.clone())
+                        .mime_str("image/png")
+                        .unwrap()
+                        .file_name("joebama_skin.png");
+                    let form = form.part("file", image);
+                    let resp = client
+                        .post("https://api.mineskin.org/generate/upload")
+                        .multipart(form)
+                        .send()
+                        .unwrap();
+                    let response: Value = resp.json().unwrap();
+                    if let Some(data) = response.get("data")?.get("texture") {
+                        let signature = data.get("signature").unwrap().as_str().unwrap();
+                        let value = data.get("value")?.as_str()?;
+                        return Some((signature.to_string(), value.to_string()));
+                    } else {
+                        thread::sleep(Duration::from_millis(RETRY_TIMEOUT_MS));
                     }
-                    */
-                } else {
-                    // TODO handle ratelimit by sleeping and looping
                 }
-                println!("{}\n\n", response);
             });
+            let data = handle.join().unwrap();
+            data_arr.push(data.unwrap());
         }
-    }).unwrap();
+        return data_arr;
+    })
+    .unwrap();
+    tex_data_arr
 }
 
-#[test]
-fn it_works() {
-    generate_skin("a1f943fc512e4b379f780ede2c823707", true);
+pub extern "system" fn java_generate_skin(env: JNIEnv, _class: JClass, input: JString, slim: jboolean) -> jobject {
+    let uuid: String = env
+        .get_string(input)
+        .expect("Couldn't get java string!")
+        .into();
+    let slim = slim == JNI_TRUE;
+    let processed_data = generate_skin(&uuid, slim);
+    let obj_example = env.new_object_array(2, env.find_class("java/lang/String").unwrap(), env.new_string("").unwrap()).unwrap();
+    let class = env.get_object_class(obj_example).unwrap();
+    let outer = env.new_object_array(5, class,obj_example).unwrap();
+    for i in 0..5 {
+        let inner = env.new_object_array(2, env.find_class("java/lang/String").unwrap(), env.new_string("").unwrap()).unwrap();
+        env.set_object_array_element(inner, 0, env.new_string(&processed_data[i].0).unwrap()).unwrap();
+        env.set_object_array_element(inner, 1, env.new_string(&processed_data[i].1).unwrap()).unwrap();
+        env.set_object_array_element(outer, i as i32, inner).unwrap();
+    }
+    outer
+}
+
+
+#[cfg(test)]
+mod tests{
+    use super::*;
+    
+    #[test]
+    fn it_works() {
+        generate_skin("a1f943fc512e4b379f780ede2c823707", true);
+    }
 }
