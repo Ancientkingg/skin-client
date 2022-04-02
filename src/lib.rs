@@ -56,9 +56,9 @@ fn move_image(src: Rect, dst: Rect, mut img: DynamicImage) -> DynamicImage {
 /*
 ?LEFT_ARM 1
 ?RIGHT_ARM 2
-?LEFT_LEG 3
-?RIGHT_LEG 4
-?TORSO 5
+?TORSO 3
+?LEFT_LEG 4
+?RIGHT_LEG 5
 */
 
 fn process_skin(idx: usize, mut img: DynamicImage, slim: bool) -> DynamicImage {
@@ -185,7 +185,7 @@ fn process_skin(idx: usize, mut img: DynamicImage, slim: bool) -> DynamicImage {
             }
             mod_img
         }
-        3 => {
+        4 => {
             // Left leg
             let mut mod_img = img;
             mod_img = move_image(Rect::new(20, 48, 8, 4), Rect::new(8, 0, 16, 8), mod_img);
@@ -205,7 +205,7 @@ fn process_skin(idx: usize, mut img: DynamicImage, slim: bool) -> DynamicImage {
 
             mod_img
         }
-        4 => {
+        5 => {
             // Right leg
             let mut mod_img = img;
             mod_img = move_image(Rect::new(20, 16, 16, 4), Rect::new(8, 0, 16, 8), mod_img);
@@ -225,7 +225,7 @@ fn process_skin(idx: usize, mut img: DynamicImage, slim: bool) -> DynamicImage {
 
             mod_img
         }
-        5 => {
+        3 => {
             let mut mod_img = img;
             mod_img = move_image(Rect::new(4, 16, 8, 4), Rect::new(8, 0, 16, 8), mod_img);
             mod_img
@@ -281,11 +281,12 @@ fn generate_skin(uuid: &str, slim: bool) -> Vec<(String, String)> {
                         thread::sleep(Duration::from_millis(RETRY_TIMEOUT_MS / 4));
                     };
                     let response: Value = resp.json().unwrap();
+                    let uuid = response.get("uuid").unwrap().as_str().unwrap();
                     if let Some(data) = response.get("data") {
                         if let Some(data) = data.get("texture") {
-                            let signature = data.get("signature").unwrap().as_str().unwrap();
+                            // let signature = data.get("signature").unwrap().as_str().unwrap();
                             let value = data.get("value")?.as_str()?;
-                            return Some((signature.to_string(), value.to_string()));
+                            return Some((uuid.to_string(), value.to_string()));
                         } else {
                             thread::sleep(Duration::from_millis(RETRY_TIMEOUT_MS));
                         }
