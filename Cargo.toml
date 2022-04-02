@@ -17,5 +17,5 @@ crossbeam = "0.8.1"
 rand = "0.8.5" 
 
 [lib]
-name = "skin_generator"
+name = "sglib"
 crate-type = ["cdylib"]
